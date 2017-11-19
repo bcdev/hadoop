@@ -321,6 +321,7 @@ public class YARNRunner implements ClientProtocol {
       throws IOException {
     LocalResource rsrc = recordFactory.newRecordInstance(LocalResource.class);
     FileStatus rsrcStat = fs.getFileStatus(p);
+    //System.out.println("yarnrunner path " + p + " fs " + fs + " result " + rsrcStat.getPath());
     rsrc.setResource(ConverterUtils.getYarnUrlFromPath(fs
         .getDefaultFileSystem().resolvePath(rsrcStat.getPath())));
     rsrc.setSize(rsrcStat.getLen());

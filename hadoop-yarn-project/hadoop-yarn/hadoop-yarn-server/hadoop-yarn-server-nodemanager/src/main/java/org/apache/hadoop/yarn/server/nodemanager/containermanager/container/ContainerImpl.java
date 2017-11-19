@@ -610,6 +610,7 @@ public class ContainerImpl implements Container {
         try {
           for (Map.Entry<String,LocalResource> rsrc : cntrRsrc.entrySet()) {
             try {
+              //LOG.info("trace LocalResource " + rsrc.getValue().getResource().toString());
               LocalResourceRequest req =
                   new LocalResourceRequest(rsrc.getValue());
               List<String> links = container.pendingResources.get(req);

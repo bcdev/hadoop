@@ -574,11 +574,18 @@ public abstract class FileSystem extends Configured implements Closeable {
    */
   public static FSDataOutputStream create(FileSystem fs,
       Path file, FsPermission permission) throws IOException {
-    // create the file with default permission
-    FSDataOutputStream out = fs.create(file);
-    // set its permission to the supplied one
-    fs.setPermission(file, permission);
-    return out;
+    //// create the file with default permission
+    //FSDataOutputStream out = fs.create(file);
+    //// set its permission to the supplied one
+    //fs.setPermission(file, permission);
+    //return out;
+    return fs.create(file,
+                     permission,
+                     true,
+                     fs.getConf().getInt("io.file.buffer.size", 4096),
+                     fs.getDefaultReplication(file),
+                     fs.getDefaultBlockSize(file),
+                     null);
   }
 
   /** create a directory with the provided permission
@@ -3134,7 +3141,7 @@ public abstract class FileSystem extends Configured implements Closeable {
      * For each StatisticsData object, we will call accept on the visitor.
      * Finally, at the end, we will call aggregate to get the final total. 
      *
-     * @param         The visitor to use.
+     * @param         visitor  The visitor to use.
      * @return        The total.
      */
     private synchronized <T> T visitAll(StatisticsAggregator<T> visitor) {

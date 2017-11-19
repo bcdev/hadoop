@@ -41,7 +41,10 @@ public class JobSubmissionFiles {
 
   // job submission directory is private!
   final public static FsPermission JOB_DIR_PERMISSION =
-    FsPermission.createImmutable((short) 0700); // rwx--------
+//    FsPermission.createImmutable((short) 0700); // rwx--------
+    FsPermission.createImmutable((short) 02770); // rwxrws--- to allow group hadoop to read
+//    FsPermission.createImmutable((short) 0711); // rwx--x--x required in RawFS to access the file
+//    FsPermission.createImmutable((short) 0777); // rwxrwxrwx required in RawFS to write COMMIT_STARTED etc
   //job files are world-wide readable and owner writable
   final public static FsPermission JOB_FILE_PERMISSION = 
     FsPermission.createImmutable((short) 0644); // rw-r--r--

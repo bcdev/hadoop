@@ -139,9 +139,20 @@ public class MRClientService extends AbstractService implements ClientService {
       // to gain access to keystore file for opening SSL listener. We can trust
       // RM/NM to issue SSL certificates but definitely not MR-AM as it is
       // running in user-land.
+      int portRangeStart = 0;
+      try {
+        String range = conf.get(MRJobConfig.MR_AM_JOB_CLIENT_PORT_RANGE);
+        if (range != null && range.length() > 0) {
+          portRangeStart = Integer.parseInt(range.split("-")[0]);
+        }
+      } catch (Exception e) {}
+      WebApps.Builder<AppContext> builder = WebApps.$for("mapreduce", AppContext.class, appContext, "ws")
+              .withHttpPolicy(conf, Policy.HTTP_ONLY);
+      if (portRangeStart > 0) {
+        builder.at("0.0.0.0", portRangeStart, true);
+      }
       webApp =
-          WebApps.$for("mapreduce", AppContext.class, appContext, "ws")
-            .withHttpPolicy(conf, Policy.HTTP_ONLY).start(new AMWebApp());
+          builder.start(new AMWebApp());
     } catch (Exception e) {
       LOG.error("Webapps failed to start. Ignoring for now:", e);
     }
