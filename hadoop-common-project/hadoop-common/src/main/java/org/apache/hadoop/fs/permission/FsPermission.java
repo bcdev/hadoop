@@ -61,6 +61,7 @@ public class FsPermission implements Writable {
   private FsAction groupaction = null;
   private FsAction otheraction = null;
   private boolean stickyBit = false;
+  private short extension;
 
   private FsPermission() {}
 
@@ -95,6 +96,7 @@ public class FsPermission implements Writable {
     this.groupaction = other.groupaction;
     this.otheraction = other.otheraction;
     this.stickyBit = other.stickyBit;
+    this.extension = other.extension;
   }
   
   /**
@@ -125,6 +127,7 @@ public class FsPermission implements Writable {
   public void fromShort(short n) {
     FsAction[] v = FSACTION_VALUES;
     set(v[(n >>> 6) & 7], v[(n >>> 3) & 7], v[n & 7], (((n >>> 9) & 1) == 1) );
+    extension = (short) (n >>> 9);
   }
 
   @Override
@@ -154,7 +157,7 @@ public class FsPermission implements Writable {
              (useraction.ordinal() << 6)  |
              (groupaction.ordinal() << 3) |
              otheraction.ordinal();
-
+    s |= extension << 9;
     return (short)s;
   }
 
@@ -188,7 +191,8 @@ public class FsPermission implements Writable {
       return this.useraction == that.useraction
           && this.groupaction == that.groupaction
           && this.otheraction == that.otheraction
-          && this.stickyBit == that.stickyBit;
+          && this.stickyBit == that.stickyBit
+          && this.extension == that.extension;
     }
     return false;
   }
