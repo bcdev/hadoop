@@ -88,17 +88,20 @@ public class JobHistoryUtils {
    * Permissions for the intermediate done directory.
    */
   public static final FsPermission HISTORY_INTERMEDIATE_DONE_DIR_PERMISSIONS = 
-    FsPermission.createImmutable((short) 01777);
-  
+    //FsPermission.createImmutable((short) 01777);
+    FsPermission.createImmutable((short) 02777);  // inherit group! This works because here we are yarn
+
   /**
    * Permissions for the user directory under the intermediate done directory.
    */
   public static final FsPermission HISTORY_INTERMEDIATE_USER_DIR_PERMISSIONS = 
-    FsPermission.createImmutable((short) 0770);
-  
+    //FsPermission.createImmutable((short) 0770);
+    FsPermission.createImmutable((short) 02770);  // inherit group such that history server can read the content (does not work)
+
   public static final FsPermission HISTORY_INTERMEDIATE_FILE_PERMISSIONS = 
-    FsPermission.createImmutable((short) 0770); // rwx------
-  
+    //FsPermission.createImmutable((short) 0770); // rwx------
+    FsPermission.createImmutable((short) 0777); // to allow history server to read
+
   /**
    * Suffix for configuration files.
    */

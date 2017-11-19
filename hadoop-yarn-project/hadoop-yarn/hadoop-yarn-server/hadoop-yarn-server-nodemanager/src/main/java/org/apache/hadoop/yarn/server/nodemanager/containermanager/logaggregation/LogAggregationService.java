@@ -82,7 +82,8 @@ public class LogAggregationService extends AbstractService implements
    * created.
    */
   private static final FsPermission TLDIR_PERMISSIONS = FsPermission
-      .createImmutable((short) 01777);
+//      .createImmutable((short) 01777);
+      .createImmutable((short) 02777);
   /**
    * Permissions for the Application directory.
    */

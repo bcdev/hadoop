@@ -135,7 +135,7 @@ class JobSubmitter {
   JobStatus submitJobInternal(Job job, Cluster cluster) 
   throws ClassNotFoundException, InterruptedException, IOException {
 
-    //validate the jobs output specs 
+    //validate the jobs output specs
     checkSpecs(job);
 
     Configuration conf = job.getConfiguration();
@@ -156,16 +156,16 @@ class JobSubmitter {
     JobStatus status = null;
     try {
       conf.set(MRJobConfig.USER_NAME,
-          UserGroupInformation.getCurrentUser().getShortUserName());
-      conf.set("hadoop.http.filter.initializers", 
-          "org.apache.hadoop.yarn.server.webproxy.amfilter.AmFilterInitializer");
+               UserGroupInformation.getCurrentUser().getShortUserName());
+      conf.set("hadoop.http.filter.initializers",
+               "org.apache.hadoop.yarn.server.webproxy.amfilter.AmFilterInitializer");
       conf.set(MRJobConfig.MAPREDUCE_JOB_DIR, submitJobDir.toString());
-      LOG.debug("Configuring job " + jobId + " with " + submitJobDir 
-          + " as the submit dir");
+      LOG.debug("Configuring job " + jobId + " with " + submitJobDir
+                        + " as the submit dir");
       // get delegation token for the dir
       TokenCache.obtainTokensForNamenodes(job.getCredentials(),
-          new Path[] { submitJobDir }, conf);
-      
+                                          new Path[]{submitJobDir}, conf);
+
       populateTokenCache(conf, job.getCredentials());
 
       // generate a secret to authenticate shuffle transfers
@@ -179,18 +179,18 @@ class JobSubmitter {
         }
         SecretKey shuffleKey = keyGen.generateKey();
         TokenCache.setShuffleSecretKey(shuffleKey.getEncoded(),
-            job.getCredentials());
+                                       job.getCredentials());
       }
       if (CryptoUtils.isEncryptedSpillEnabled(conf)) {
         conf.setInt(MRJobConfig.MR_AM_MAX_ATTEMPTS, 1);
         LOG.warn("Max job attempts set to 1 since encrypted intermediate" +
-                "data spill is enabled");
+                         "data spill is enabled");
       }
 
       copyAndConfigureFiles(job, submitJobDir);
 
       Path submitJobFile = JobSubmissionFiles.getJobConfPath(submitJobDir);
-      
+
       // Create the splits for the job
       LOG.debug("Creating splits at " + jtFs.makeQualified(submitJobDir));
       int maps = writeSplits(job, submitJobDir);
@@ -200,10 +200,10 @@ class JobSubmitter {
       // write "queue admins of the queue to which job is being submitted"
       // to job file.
       String queue = conf.get(MRJobConfig.QUEUE_NAME,
-          JobConf.DEFAULT_QUEUE_NAME);
+                              JobConf.DEFAULT_QUEUE_NAME);
       AccessControlList acl = submitClient.getQueueAdmins(queue);
       conf.set(toFullPropertyName(queue,
-          QueueACL.ADMINISTER_JOBS.getAclName()), acl.getAclString());
+                                  QueueACL.ADMINISTER_JOBS.getAclName()), acl.getAclString());
 
       // removing jobtoken referrals before copying the jobconf to HDFS
       // as the tasks don't need this setting, actually they may break
@@ -212,16 +212,16 @@ class JobSubmitter {
       TokenCache.cleanUpTokenReferral(conf);
 
       if (conf.getBoolean(
-          MRJobConfig.JOB_TOKEN_TRACKING_IDS_ENABLED,
-          MRJobConfig.DEFAULT_JOB_TOKEN_TRACKING_IDS_ENABLED)) {
+              MRJobConfig.JOB_TOKEN_TRACKING_IDS_ENABLED,
+              MRJobConfig.DEFAULT_JOB_TOKEN_TRACKING_IDS_ENABLED)) {
         // Add HDFS tracking ids
         ArrayList<String> trackingIds = new ArrayList<String>();
         for (Token<? extends TokenIdentifier> t :
-            job.getCredentials().getAllTokens()) {
+                job.getCredentials().getAllTokens()) {
           trackingIds.add(t.decodeIdentifier().getTrackingId());
         }
         conf.setStrings(MRJobConfig.JOB_TOKEN_TRACKING_IDS,
-            trackingIds.toArray(new String[trackingIds.size()]));
+                        trackingIds.toArray(new String[trackingIds.size()]));
       }
 
       // Set reservation info if it exists
@@ -232,24 +232,35 @@ class JobSubmitter {
 
       // Write job file to submit dir
       writeConf(conf, submitJobFile);
-      
+
       //
       // Now, actually submit the job (using the submit name)
       //
       printTokens(jobId, job.getCredentials());
       status = submitClient.submitJob(
-          jobId, submitJobDir.toString(), job.getCredentials());
+              jobId, submitJobDir.toString(), job.getCredentials());
       if (status != null) {
         return status;
       } else {
         throw new IOException("Could not launch job");
       }
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
+      throw e;
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+      throw e;
+    } catch (IOException e) {
+      e.printStackTrace();
+      throw e;
+    } catch (RuntimeException e) {
+      e.printStackTrace();
+      throw e;
     } finally {
       if (status == null) {
         LOG.info("Cleaning up the staging area " + submitJobDir);
         if (jtFs != null && submitJobDir != null)
           jtFs.delete(submitJobDir, true);
-
       }
     }
   }
@@ -304,7 +315,7 @@ class JobSubmitter {
     // sort the splits into order based on size, so that the biggest
     // go first
     Arrays.sort(array, new SplitComparator());
-    JobSplitWriter.createSplitFiles(jobSubmitDir, conf, 
+    JobSplitWriter.createSplitFiles(jobSubmitDir, conf,
         jobSubmitDir.getFileSystem(conf), array);
     return array.length;
   }
