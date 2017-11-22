@@ -290,7 +290,7 @@ public abstract class FileInputFormat<K, V> extends InputFormat<K, V> {
     List<IOException> errors = new ArrayList<IOException>();
     for (int i=0; i < dirs.length; ++i) {
       Path p = dirs[i];
-      FileSystem fs = p.getFileSystem(job.getConfiguration()); 
+      FileSystem fs = p.getFileSystem(job.getConfiguration());
       FileStatus[] matches = fs.globStatus(p, inputFilter);
       if (matches == null) {
         errors.add(new IOException("Input path does not exist: " + p));
