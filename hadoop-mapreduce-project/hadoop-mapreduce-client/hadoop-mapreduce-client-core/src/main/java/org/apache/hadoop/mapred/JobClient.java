@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.hadoop.HadoopIllegalArgumentException;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
@@ -586,7 +587,11 @@ public class JobClient extends CLI {
       // It is important to close the previous cluster instance
       // to cleanup resources.
       if (prev != null) {
-        prev.close();
+        try {
+          prev.close();
+        } catch (HadoopIllegalArgumentException e) {
+          System.err.println("warning: " + e.getMessage());
+        }
       }
       return new NetworkedJob(job);
     } catch (InterruptedException ie) {
