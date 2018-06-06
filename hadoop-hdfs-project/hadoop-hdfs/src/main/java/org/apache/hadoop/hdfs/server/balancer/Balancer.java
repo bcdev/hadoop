@@ -169,7 +169,7 @@ public class Balancer {
   static final Path BALANCER_ID_PATH = new Path("/system/balancer.id");
 
   private static final long GB = 1L << 30; //1GB
-  private static final long MAX_SIZE_TO_MOVE = 10*GB;
+  private static final long MAX_SIZE_TO_MOVE = 100*GB;
 
   private static final String USAGE = "Usage: hdfs balancer"
       + "\n\t[-policy <policy>]\tthe balancing policy: "
