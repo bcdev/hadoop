@@ -228,6 +228,10 @@ public class Cluster {
     }
     return null;
   }
+
+  public JobStatus getJobStatus(JobID jobId) throws IOException, InterruptedException {
+    return client.getJobStatus(jobId);
+  }
   
   /**
    * Get all the queues in cluster.
