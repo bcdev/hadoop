@@ -862,8 +862,25 @@ public class JobClient extends CLI {
       throw new IOException(ie);
     }
   }
-  
-  /** 
+
+  public JobStatus getJobStatus(JobID jobId) throws IOException {
+    try {
+      final JobID jobIdFinal = jobId;
+      org.apache.hadoop.mapreduce.JobStatus job =
+          clientUgi.doAs(new PrivilegedExceptionAction<
+              org.apache.hadoop.mapreduce.JobStatus> () {
+            public org.apache.hadoop.mapreduce.JobStatus run()
+                throws IOException, InterruptedException {
+              return cluster.getJobStatus(jobIdFinal);
+            }
+          });
+      return JobStatus.downgrade(job);
+    } catch (InterruptedException e) {
+      throw new IOException(e);
+    }
+  }
+
+  /**
    * Utility that submits a job, then polls for progress until the job is
    * complete.
    * 
