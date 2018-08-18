@@ -1,6 +1,50 @@
 Hadoop YARN Change Log
 
-Release 2.7.5 - UNRELEASED
+elease 2.7.7 - 2018-07-18
+
+  INCOMPATIBLE CHANGES
+
+  NEW FEATURES
+
+  IMPROVEMENTS
+
+  OPTIMIZATIONS
+
+  BUG FIXES
+
+    Addendum fix in container executor.
+    Contributed by Wilfred Spiegelenburg.
+
+Release 2.7.6 - 2018-04-16
+
+  INCOMPATIBLE CHANGES
+
+  NEW FEATURES
+
+  IMPROVEMENTS
+
+  OPTIMIZATIONS
+
+  BUG FIXES
+
+    YARN-7661. NodeManager metrics return wrong value after update node
+    resource (Yang Wang via jlowe)
+
+    YARN-3425. NPE from RMNodeLabelsManager.serviceStop when
+    NodeLabelsManager.serviceInit failed. (Bibin A Chundatt via wangda)
+    Backport YARN-6632 by Inigo Goiri.
+
+    YARN-4167. NPE on RMActiveServices#serviceStop when store is null.
+    (Bibin A Chundatt via rohithsharmaks)
+    Backport YARN-6633 by Inigo Goiri.
+
+    YARN-7590. Improve container-executor validation check.
+    Contributed by Eric Yang.
+
+    YARN-7249. Fix CapacityScheduler NPE issue when a container preempted while
+    the node is being removed. (Wangda Tan via Eric Payne)
+
+Release 2.7.5 - 2017-12-14
 
   INCOMPATIBLE CHANGES
 
@@ -15,6 +59,12 @@ Release 2.7.5 - UNRELEASED
     YARN-5195. RM intermittently crashed with NPE while handling
     APP_ATTEMPT_REMOVED event when async-scheduling enabled in
     CapacityScheduler. (sandflee and Jonathan Hung via jlowe)
+
+    YARN-6959. RM may allocate wrong AM Container for new attempt.
+    (Yuqi Wang via Jian He)
+
+    YARN-7084. TestSchedulingMonitor#testRMStarts fails sporadically.
+    (Jason Lowe)
 
 Release 2.7.4 - 2017-08-04
 

@@ -224,6 +224,52 @@ for ldap providers in the same way as above does.
 </property>
 
 <property>
+  <name>hadoop.security.groups.cache.background.reload</name>
+  <value>false</value>
+  <description>
+    Whether to reload expired user->group mappings using a background thread
+    pool. If set to true, a pool of
+    hadoop.security.groups.cache.background.reload.threads is created to
+    update the cache in the background.
+  </description>
+</property>
+
+<property>
+  <name>hadoop.security.groups.cache.background.reload.threads</name>
+  <value>3</value>
+  <description>
+    Only relevant if hadoop.security.groups.cache.background.reload is true.
+    Controls the number of concurrent background user->group cache entry
+    refreshes. Pending refresh requests beyond this value are queued and
+    processed when a thread is free.
+  </description>
+</property>
+
+<property>
+  <name>hadoop.security.group.mapping.ldap.connection.timeout.ms</name>
+  <value>60000</value>
+  <description>
+    This property is the connection timeout (in milliseconds) for LDAP
+    operations. If the LDAP provider doesn't establish a connection within the
+    specified period, it will abort the connect attempt. Non-positive value
+    means no LDAP connection timeout is specified in which case it waits for the
+    connection to establish until the underlying network times out.
+  </description>
+</property>
+
+<property>
+  <name>hadoop.security.group.mapping.ldap.read.timeout.ms</name>
+  <value>60000</value>
+  <description>
+    This property is the read timeout (in milliseconds) for LDAP
+    operations. If the LDAP provider doesn't get a LDAP response within the
+    specified period, it will abort the read attempt. Non-positive value
+    means no read timeout is specified in which case it waits for the response
+    infinitely.
+  </description>
+</property>
+
+<property>
   <name>hadoop.security.group.mapping.ldap.url</name>
   <value></value>
   <description>
@@ -254,6 +300,27 @@ for ldap providers in the same way as above does.
   <value></value>
   <description>
     The path to a file containing the password of the LDAP SSL keystore.
+
+    IMPORTANT: This file should be readable only by the Unix user running
+    the daemons.
+  </description>
+</property>
+
+<property>
+  <name>hadoop.security.group.mapping.ldap.ssl.truststore</name>
+  <value></value>
+  <description>
+    File path to the SSL truststore that contains the root certificate used to
+    sign the LDAP server's certificate. Specify this if the LDAP server's
+    certificate is not signed by a well known certificate authority.
+  </description>
+</property>
+
+<property>
+  <name>hadoop.security.group.mapping.ldap.ssl.truststore.password.file</name>
+  <value></value>
+  <description>
+    The path to a file containing the password of the LDAP SSL truststore.
 
     IMPORTANT: This file should be readable only by the Unix user running
     the daemons.
@@ -298,6 +365,11 @@ for ldap providers in the same way as above does.
     an LDAP server with a non-AD schema, this should be replaced with
     (&amp;(objectClass=inetOrgPerson)(uid={0}). {0} is a special string used to
     denote where the username fits into the filter.
+
+    If the LDAP server supports posixGroups, Hadoop can enable the feature by
+    setting the value of this property to "posixAccount" and the value of
+    the hadoop.security.group.mapping.ldap.search.filter.group property to
+    "posixGroup".
   </description>
 </property>
 
@@ -307,7 +379,9 @@ for ldap providers in the same way as above does.
   <description>
     An additional filter to use when searching for LDAP groups. This should be
     changed when resolving groups against a non-Active Directory installation.
-    posixGroups are currently not a supported group class.
+
+    See the description of hadoop.security.group.mapping.ldap.search.filter.user
+    to enable posixGroups support.
   </description>
 </property>
 
@@ -327,6 +401,24 @@ for ldap providers in the same way as above does.
   <description>
     The attribute of the group object that identifies the group name. The
     default will usually be appropriate for all LDAP systems.
+  </description>
+</property>
+
+<property>
+  <name>hadoop.security.group.mapping.ldap.posix.attr.uid.name</name>
+  <value>uidNumber</value>
+  <description>
+    The attribute of posixAccount to use when groups for membership.
+    Mostly useful for schemas wherein groups have memberUids that use an
+    attribute other than uidNumber.
+  </description>
+</property>
+
+<property>
+  <name>hadoop.security.group.mapping.ldap.posix.attr.gid.name</name>
+  <value>gidNumber</value>
+  <description>
+    The attribute of posixAccount indicating the group id.
   </description>
 </property>
 
@@ -1748,6 +1840,29 @@ for ldap providers in the same way as above does.
   <value></value>
   <description>
     The JCE provider name used in CryptoCodec. 
+  </description>
+</property>
+
+<property>
+  <name>hadoop.security.crypto.jceks.key.serialfilter</name>
+  <description>
+    Enhanced KeyStore Mechanisms in JDK 8u171 introduced jceks.key.serialFilter.
+    If jceks.key.serialFilter is configured, the JCEKS KeyStore uses it during
+    the deserialization of the encrypted Key object stored inside a
+    SecretKeyEntry.
+    If jceks.key.serialFilter is not configured it will cause an error when
+    recovering keystore file in KeyProviderFactory when recovering key from
+    keystore file using JDK 8u171 or newer. The filter pattern uses the same
+    format as jdk.serialFilter.
+
+    The value of this property will be used as the following:
+    1. The value of jceks.key.serialFilter system property takes precedence
+    over the value of this property.
+    2. In the absence of jceks.key.serialFilter system property the value of
+    this property will be set as the value of jceks.key.serialFilter.
+    3. If the value of this property and jceks.key.serialFilter system
+    property has not been set, org.apache.hadoop.crypto.key.KeyProvider
+    sets a default value for jceks.key.serialFilter.
   </description>
 </property>
 

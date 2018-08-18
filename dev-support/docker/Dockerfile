@@ -46,25 +46,26 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 RUN cd /usr/share/maven/lib && ln -s ../../java/commons-lang.jar .
 
 #######
-# Oracle Java
+# Java OpenJDK
 #######
 
 RUN apt-get install -y software-properties-common
 RUN add-apt-repository -y ppa:webupd8team/java
 RUN apt-get update
 
-# Auto-accept the Oracle JDK license
-RUN echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
-RUN apt-get install -y oracle-java8-installer
+# Install OpenJDK 7
+RUN apt-get install -y openjdk-7-jdk
 
 ######
-# Install findbugs
+# Install spotbugs (successor of findbugs)
 ######
-RUN mkdir -p /opt/findbugs && \
-    curl -L https://sourceforge.net/projects/findbugs/files/findbugs/3.0.1/findbugs-noUpdateChecks-3.0.1.tar.gz/download \
-         -o /opt/findbugs.tar.gz && \
-    tar xzf /opt/findbugs.tar.gz --strip-components 1 -C /opt/findbugs
-ENV FINDBUGS_HOME /opt/findbugs
+RUN mkdir -p /opt/spotbugs && \
+    curl -L -s -S \
+         http://repo.maven.apache.org/maven2/com/github/spotbugs/spotbugs/3.1.2/spotbugs-3.1.2.tgz \
+         -o /opt/spotbugs.tar.gz && \
+    tar xzf /opt/spotbugs.tar.gz --strip-components 1 -C /opt/spotbugs
+# Hadoop uses FINDBUGS_HOME to run spotbugs
+ENV FINDBUGS_HOME /opt/spotbugs
 
 ####
 # Install shellcheck
@@ -75,7 +76,7 @@ RUN cabal update && cabal install shellcheck --global
 ###
 # Avoid out of memory errors in builds
 ###
-ENV MAVEN_OPTS -Xms256m -Xmx512m
+ENV MAVEN_OPTS -Xms256m -Xmx1536m
 
 ###
 # Everything past this point is either not needed for testing or breaks Yetus.

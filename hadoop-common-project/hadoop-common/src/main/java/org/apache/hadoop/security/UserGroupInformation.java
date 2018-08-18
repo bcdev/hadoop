@@ -250,14 +250,18 @@ public class UserGroupInformation {
   public static final String HADOOP_TOKEN_FILE_LOCATION = 
     "HADOOP_TOKEN_FILE_LOCATION";
   
+  public static boolean isInitialized() {
+    return conf != null;
+  }
+
   /** 
    * A method to initialize the fields that depend on a configuration.
    * Must be called before useKerberos or groups is used.
    */
   private static void ensureInitialized() {
-    if (conf == null) {
+    if (!isInitialized()) {
       synchronized(UserGroupInformation.class) {
-        if (conf == null) { // someone might have beat us
+        if (!isInitialized()) { // someone might have beat us
           initialize(new Configuration(), false);
         }
       }
@@ -1047,10 +1051,14 @@ public class UserGroupInformation {
         Object cred = iter.next();
         if (cred instanceof KerberosTicket) {
           KerberosTicket ticket = (KerberosTicket) cred;
-          if (!ticket.getServer().getName().startsWith("krbtgt")) {
-            LOG.warn("The first kerberos ticket is not TGT(the server" +
-                " principal is " + ticket.getServer() + "), remove" +
-                " and destroy it.");
+          if (ticket.isDestroyed() || ticket.getServer() == null) {
+            LOG.warn("Ticket is already destroyed, remove it.");
+            iter.remove();
+          } else if (!ticket.getServer().getName().startsWith("krbtgt")) {
+            LOG.warn(
+                "The first kerberos ticket is not TGT"
+                    + "(the server principal is " + ticket.getServer() +
+                    ")), remove and destroy it.");
             iter.remove();
             try {
               ticket.destroy();

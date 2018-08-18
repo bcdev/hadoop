@@ -234,7 +234,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
     }
 
     private static boolean getRestrictParserDefault(Object resource) {
-      if (resource instanceof String) {
+      if (resource instanceof String || !UserGroupInformation.isInitialized()) {
         return false;
       }
       UserGroupInformation user;
@@ -2009,7 +2009,7 @@ public class Configuration implements Iterable<Map.Entry<String,String>>,
    * @return password or null if not found
    * @throws IOException
    */
-  protected char[] getPasswordFromCredentialProviders(String name)
+  public char[] getPasswordFromCredentialProviders(String name)
       throws IOException {
     char[] pass = null;
     try {
