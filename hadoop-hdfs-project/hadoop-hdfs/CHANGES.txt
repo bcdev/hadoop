@@ -1,6 +1,79 @@
 Hadoop HDFS Change Log
 
-Release 2.7.5 - UNRELEASED
+Release 2.7.7 - 2018-07-18
+
+  INCOMPATIBLE CHANGES
+
+  NEW FEATURES
+
+  IMPROVEMENTS
+
+    HDFS-13602. Add checkOperation(WRITE) checks in FSNamesystem.
+    Contributed by Chao Sun.
+
+  OPTIMIZATIONS
+
+  BUG FIXES
+
+    HDFS-13486. Backport HDFS-11817 (A faulty node can cause a lease
+    leak and NPE on accessing data) to branch-2.7.
+    Contributed by Kihwal Lee.
+
+    HDFS-12156. TestFSImage fails without -Pnative
+    Contributed Akira Ajisaka.
+
+Release 2.7.6 - 2018-04-16
+
+  INCOMPATIBLE CHANGES
+
+  NEW FEATURES
+
+  IMPROVEMENTS
+
+    HDFS-11003. Expose XmitsInProgress through DataNodeMXBean.
+    (Brahma Reddy Battula)
+
+    HDFS-11187. Optimize disk access for last partial chunk checksum of
+    Finalized replica. (Gabor Bota, Wei-Chiu Chuang via Xiao Chen)
+
+    HDFS-12884. BlockUnderConstructionFeature.truncateBlock should be of type
+    BlockInfo. (chencan via shv)
+
+  OPTIMIZATIONS
+
+  BUG FIXES
+
+    HDFS-12881. Output streams closed with IOUtils suppressing write errors.
+    (Ajay Kumar via jlowe)
+
+    HDFS-12347. TestBalancerRPCDelay#testBalancerRPCDelay fails very frequently.
+    (Bharat Viswanadham via Tsz-Wo Nicholas Sze)
+
+    HDFS-12371. BlockVerificationFailures and BlocksVerified show up as 0
+    in Datanode JMX. (Hanisha Koneru via Kihwal Lee, shv).
+
+    HDFS-13120. Snapshot diff could be corrupted after concat. (xyao)
+
+    HDFS-7959. WebHdfs logging is missing on Datanode (Kihwal Lee via sjlee)
+    Backport HDFS-13126 by Erik Krogen.
+
+    HDFS-10453. ReplicationMonitor thread could stuck for long time
+    due to the race between replication and delete of same file in a
+    large cluster. Contributed by He Xiaoqiao.
+
+    HDFS-13112. Token expiration edits may cause log corruption or deadlock.
+    (daryn via kihwal)
+
+    HDFS-4210. Throw helpful exception when DNS entry for JournalNode cannot be
+    resolved. (Charles Lamb and John Zhuge)
+
+    HDFS-13195. DataNode conf page cannot display the current value after
+    reconfig. (Mao Baolong via kihwal)
+
+    HDFS-12299. Race Between update pipeline and DN Re-Registration.
+    (Brahma Reddy Battula. Backport by Wei-Chiu Chuang, Konstantin Shvachko)
+
+Release 2.7.5 - 2017-12-14
 
   INCOMPATIBLE CHANGES
 
@@ -21,8 +94,11 @@ Release 2.7.5 - UNRELEASED
     HDFS-10984. Expose nntop output as metrics. (Siddharth Wagle via xyao, zhz)
 
     HDFS-9259. Make SO_SNDBUF size configurable at DFSClient side for hdfs write
-    scenario. (original patch Mingliang Liu via Ming Ma, branch-2.7 backport done
-    under HDFS-12823, Erik Krogen via zhz).
+    scenario. (original patch Mingliang Liu via Ming Ma, branch-2.7 backport
+    done under HDFS-12823, Erik Krogen via zhz).
+
+    HDFS-12596. Add TestFsck#testFsckCorruptWhenOneReplicaIsCorrupt
+    back to branch-2.7. (Xiao Chen)
 
   OPTIMIZATIONS
 
@@ -31,6 +107,10 @@ Release 2.7.5 - UNRELEASED
 
     HDFS-12323. NameNode terminates after full GC thinking QJM unresponsive
     if full GC is much longer than timeout. (Erik Krogen via shv)
+
+    HDFS-8829. Make SO_RCVBUF and SO_SNDBUF size configurable for
+    DataTransferProtocol sockets and allow configuring auto-tuning (He Tianyi
+    via Colin P. McCabe)
 
   BUG FIXES
 
@@ -47,6 +127,15 @@ Release 2.7.5 - UNRELEASED
     HDFS-8865. Improve quota initialization performance. Contributed by Kihwal Lee.
 
     HDFS-9003. ForkJoin thread pool leaks. (Kihwal Lee via jing9)
+
+    HDFS-12578. TestDeadDatanode#testNonDFSUsedONDeadNodeReReg failing
+    in branch-2.7. (Ajay Kumar via Xiao Chen)
+
+    HDFS-12832. INode.getFullPathName may throw ArrayIndexOutOfBoundsException
+    lead to NameNode exit. (shv)
+
+    HDFS-12638. Delete copy-on-truncate block along with the original block,
+    when deleting a file being truncated. (shv)
 
 Release 2.7.4 - 2017-08-04
 
@@ -520,10 +609,6 @@ Release 2.7.3 - 2016-08-25
 
     HDFS-8845. DiskChecker should not traverse the entire tree (Chang Li via
     Colin P. McCabe)
-
-    HDFS-8829. Make SO_RCVBUF and SO_SNDBUF size configurable for
-    DataTransferProtocol sockets and allow configuring auto-tuning (He Tianyi
-    via Colin P. McCabe)
 
   BUG FIXES
 

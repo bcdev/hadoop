@@ -15,31 +15,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hdfs.util;
+package org.apache.hadoop.fs.permission;
 
-/** Read-write lock interface. */
-public interface RwLock {
-  /** Acquire read lock. */
-  public void readLock();
+import java.util.regex.Pattern;
 
-  /** Acquire read lock, unless interrupted while waiting  */
-  void readLockInterruptibly() throws InterruptedException;
+import org.apache.hadoop.classification.InterfaceAudience;
+import org.apache.hadoop.classification.InterfaceStability;
 
-  /** Release read lock. */
-  public void readUnlock();
+@InterfaceAudience.Private
+@InterfaceStability.Unstable
+class RawParser extends PermissionParser {
+  private static Pattern rawOctalPattern =
+      Pattern.compile("^\\s*([01]?)([0-7]{3})\\s*$");
+  private static Pattern rawNormalPattern =
+      Pattern.compile("\\G\\s*([ugoa]*)([+=-]+)([rwxt]*)([,\\s]*)\\s*");
 
-  /** Check if the current thread holds read lock. */
-  public boolean hasReadLock();
+  private short permission;
 
-  /** Acquire write lock. */
-  public void writeLock();
-  
-  /** Acquire write lock, unless interrupted while waiting  */
-  void writeLockInterruptibly() throws InterruptedException;
+  public RawParser(String modeStr) throws IllegalArgumentException {
+    super(modeStr, rawNormalPattern, rawOctalPattern);
+    permission = (short)combineModes(0, false);
+  }
 
-  /** Release write lock. */
-  public void writeUnlock();
+  public short getPermission() {
+    return permission;
+  }
 
-  /** Check if the current thread holds write lock. */
-  public boolean hasWriteLock();
 }

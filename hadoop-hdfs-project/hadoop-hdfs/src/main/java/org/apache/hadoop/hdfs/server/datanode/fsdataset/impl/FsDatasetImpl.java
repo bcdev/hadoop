@@ -995,8 +995,10 @@ class FsDatasetImpl implements FsDatasetSpi<FsVolumeImpl> {
       // calculate and write the last crc
       checksum.calculateChunkedSums(data, 0, offset, crcs, 0);
       metaOut.write(crcs, 0, 4);
+      metaOut.close();
+      metaOut = null;
     } finally {
-      IOUtils.cleanup(LOG, metaOut);
+      IOUtils.closeStream(metaOut);
     }
   }
 
@@ -1125,10 +1127,8 @@ class FsDatasetImpl implements FsDatasetSpi<FsVolumeImpl> {
         v, newBlkFile.getParentFile(), Thread.currentThread(), bytesReserved);
 
     // load last checksum and datalen
-    byte[] lastChunkChecksum = v.loadLastPartialChunkChecksum(
-        replicaInfo.getBlockFile(), replicaInfo.getMetaFile());
     newReplicaInfo.setLastChecksumAndDataLen(
-        replicaInfo.getNumBytes(), lastChunkChecksum);
+        replicaInfo.getNumBytes(), replicaInfo.getLastPartialChunkChecksum());
 
     File newmeta = newReplicaInfo.getMetaFile();
 
@@ -1619,6 +1619,7 @@ class FsDatasetImpl implements FsDatasetSpi<FsVolumeImpl> {
          ReplicaState.FINALIZED) {
       newReplicaInfo = (FinalizedReplica)
              ((ReplicaUnderRecovery)replicaInfo).getOriginalReplica();
+      newReplicaInfo.loadLastPartialChunkChecksum();
     } else {
       FsVolumeImpl v = (FsVolumeImpl)replicaInfo.getVolume();
       File f = replicaInfo.getBlockFile();
@@ -1630,6 +1631,19 @@ class FsDatasetImpl implements FsDatasetSpi<FsVolumeImpl> {
       File dest = v.addFinalizedBlock(
           bpid, replicaInfo, f, replicaInfo.getBytesReserved());
       newReplicaInfo = new FinalizedReplica(replicaInfo, v, dest.getParentFile());
+
+      byte[] checksum = null;
+      // copy the last partial checksum if the replica is originally
+      // in finalized or rbw state.
+      if (replicaInfo.getState() == ReplicaState.FINALIZED) {
+        FinalizedReplica finalized = (FinalizedReplica)replicaInfo;
+        checksum = finalized.getLastPartialChunkChecksum();
+      } else if (replicaInfo.getState() == ReplicaState.RBW) {
+        ReplicaBeingWritten rbw = (ReplicaBeingWritten)replicaInfo;
+        checksum = rbw.getLastChecksumAndDataLen().getChecksum();
+      }
+      newReplicaInfo.setLastPartialChunkChecksum(checksum);
+
       if (v.isTransientStorage()) {
         ramDiskReplicaTracker.addReplica(bpid, replicaInfo.getBlockId(), v);
         datanode.getMetrics().addRamDiskBytesWrite(replicaInfo.getNumBytes());

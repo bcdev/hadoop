@@ -57,7 +57,7 @@ public class BlockInfoContiguousUnderConstruction extends BlockInfoContiguous {
   /**
    * The block source to use in the event of copy-on-write truncate.
    */
-  private Block truncateBlock;
+  private BlockInfoContiguous truncateBlock;
 
   /**
    * ReplicaUnderConstruction contains information about replicas while
@@ -190,11 +190,23 @@ public class BlockInfoContiguousUnderConstruction extends BlockInfoContiguous {
 
   /** Set expected locations */
   public void setExpectedLocations(DatanodeStorageInfo[] targets) {
-    int numLocations = targets == null ? 0 : targets.length;
+    if (targets == null) {
+      return;
+    }
+    int numLocations = 0;
+    for (DatanodeStorageInfo target : targets) {
+      if (target != null) {
+        numLocations++;
+      }
+    }
+
     this.replicas = new ArrayList<ReplicaUnderConstruction>(numLocations);
-    for(int i = 0; i < numLocations; i++)
-      replicas.add(
-        new ReplicaUnderConstruction(this, targets[i], ReplicaState.RBW));
+    for(int i = 0; i < targets.length; i++) {
+      // Only store non-null DatanodeStorageInfo.
+      if (targets[i] != null) {
+        replicas.add(new ReplicaUnderConstruction(this, targets[i], ReplicaState.RBW));
+      }
+    }
   }
 
   /**
@@ -233,11 +245,11 @@ public class BlockInfoContiguousUnderConstruction extends BlockInfoContiguous {
   }
 
   /** Get recover block */
-  public Block getTruncateBlock() {
+  public BlockInfoContiguous getTruncateBlock() {
     return truncateBlock;
   }
 
-  public void setTruncateBlock(Block recoveryBlock) {
+  public void setTruncateBlock(BlockInfoContiguous recoveryBlock) {
     this.truncateBlock = recoveryBlock;
   }
 
@@ -285,10 +297,15 @@ public class BlockInfoContiguousUnderConstruction extends BlockInfoContiguous {
    * Initialize lease recovery for this block.
    * Find the first alive data-node starting from the previous primary and
    * make it primary.
+   * @param recoveryId Recovery ID (new gen stamp)
+   * @param startRecovery Issue recovery command to datanode if true.
    */
-  public void initializeBlockRecovery(long recoveryId) {
+  public void initializeBlockRecovery(long recoveryId, boolean startRecovery) {
     setBlockUCState(BlockUCState.UNDER_RECOVERY);
     blockRecoveryId = recoveryId;
+    if (!startRecovery) {
+      return;
+    }
     if (replicas.size() == 0) {
       NameNode.blockStateChangeLog.warn("BLOCK*"
         + " BlockInfoUnderConstruction.initLeaseRecovery:"
@@ -336,27 +353,33 @@ public class BlockInfoContiguousUnderConstruction extends BlockInfoContiguous {
   void addReplicaIfNotPresent(DatanodeStorageInfo storage,
                      Block block,
                      ReplicaState rState) {
-    Iterator<ReplicaUnderConstruction> it = replicas.iterator();
-    while (it.hasNext()) {
-      ReplicaUnderConstruction r = it.next();
-      DatanodeStorageInfo expectedLocation = r.getExpectedStorageLocation();
-      if(expectedLocation == storage) {
-        // Record the gen stamp from the report
-        r.setGenerationStamp(block.getGenerationStamp());
-        return;
-      } else if (expectedLocation != null &&
-                 expectedLocation.getDatanodeDescriptor() ==
-                     storage.getDatanodeDescriptor()) {
+    if (replicas == null) {
+      replicas = new ArrayList<ReplicaUnderConstruction>(1);
+      replicas.add(new ReplicaUnderConstruction(block, storage,
+          rState));
+    } else {
+      Iterator<ReplicaUnderConstruction> it = replicas.iterator();
+      while (it.hasNext()) {
+        ReplicaUnderConstruction r = it.next();
+        DatanodeStorageInfo expectedLocation = r.getExpectedStorageLocation();
+        if (expectedLocation == storage) {
+          // Record the gen stamp from the report
+          r.setGenerationStamp(block.getGenerationStamp());
+          return;
+        } else if (expectedLocation != null
+            && expectedLocation.getDatanodeDescriptor() ==
+            storage.getDatanodeDescriptor()) {
 
-        // The Datanode reported that the block is on a different storage
-        // than the one chosen by BlockPlacementPolicy. This can occur as
-        // we allow Datanodes to choose the target storage. Update our
-        // state by removing the stale entry and adding a new one.
-        it.remove();
-        break;
+          // The Datanode reported that the block is on a different storage
+          // than the one chosen by BlockPlacementPolicy. This can occur as
+          // we allow Datanodes to choose the target storage. Update our
+          // state by removing the stale entry and adding a new one.
+          it.remove();
+          break;
+        }
       }
+      replicas.add(new ReplicaUnderConstruction(block, storage, rState));
     }
-    replicas.add(new ReplicaUnderConstruction(block, storage, rState));
   }
 
   @Override // BlockInfo

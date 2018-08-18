@@ -102,6 +102,27 @@ public class LdapGroupsMapping
   public static final String LDAP_KEYSTORE_PASSWORD_FILE_KEY = LDAP_KEYSTORE_PASSWORD_KEY + ".file";
   public static final String LDAP_KEYSTORE_PASSWORD_FILE_DEFAULT = "";
 
+
+  /**
+   * File path to the location of the SSL truststore to use
+   */
+  public static final String LDAP_TRUSTSTORE_KEY = LDAP_CONFIG_PREFIX +
+      ".ssl.truststore";
+
+  /**
+   * The key of the credential entry containing the password for
+   * the LDAP SSL truststore
+   */
+  public static final String LDAP_TRUSTSTORE_PASSWORD_KEY =
+      LDAP_CONFIG_PREFIX +".ssl.truststore.password";
+
+  /**
+   * The path to a file containing the password for
+   * the LDAP SSL truststore
+   */
+  public static final String LDAP_TRUSTSTORE_PASSWORD_FILE_KEY =
+      LDAP_TRUSTSTORE_PASSWORD_KEY + ".file";
+
   /*
    * User to bind to the LDAP server with
    */
@@ -148,12 +169,34 @@ public class LdapGroupsMapping
   public static final String GROUP_NAME_ATTR_DEFAULT = "cn";
 
   /*
+   * LDAP attribute names to use when doing posix-like lookups
+   */
+  public static final String POSIX_UID_ATTR_KEY = LDAP_CONFIG_PREFIX + ".posix.attr.uid.name";
+  public static final String POSIX_UID_ATTR_DEFAULT = "uidNumber";
+
+  public static final String POSIX_GID_ATTR_KEY = LDAP_CONFIG_PREFIX + ".posix.attr.gid.name";
+  public static final String POSIX_GID_ATTR_DEFAULT = "gidNumber";
+
+  /*
+   * Posix attributes
+   */
+  public static final String POSIX_GROUP = "posixGroup";
+  public static final String POSIX_ACCOUNT = "posixAccount";
+
+  /*
    * LDAP {@link SearchControls} attribute to set the time limit
    * for an invoked directory search. Prevents infinite wait cases.
    */
   public static final String DIRECTORY_SEARCH_TIMEOUT =
     LDAP_CONFIG_PREFIX + ".directory.search.timeout";
   public static final int DIRECTORY_SEARCH_TIMEOUT_DEFAULT = 10000; // 10s
+
+  public static final String CONNECTION_TIMEOUT =
+      LDAP_CONFIG_PREFIX + ".connection.timeout.ms";
+  public static final int CONNECTION_TIMEOUT_DEFAULT = 60 * 1000; // 60 seconds
+  public static final String READ_TIMEOUT =
+      LDAP_CONFIG_PREFIX + ".read.timeout.ms";
+  public static final int READ_TIMEOUT_DEFAULT = 60 * 1000; // 60 seconds
 
   private static final Log LOG = LogFactory.getLog(LdapGroupsMapping.class);
 
@@ -169,6 +212,8 @@ public class LdapGroupsMapping
   private boolean useSsl;
   private String keystore;
   private String keystorePass;
+  private String truststore;
+  private String truststorePass;
   private String bindUser;
   private String bindPassword;
   private String baseDN;
@@ -176,6 +221,9 @@ public class LdapGroupsMapping
   private String userSearchFilter;
   private String groupMemberAttr;
   private String groupNameAttr;
+  private String posixUidAttr;
+  private String posixGidAttr;
+  private boolean isPosix;
 
   public static final int RECONNECT_RETRY_COUNT = 3;
   
@@ -226,15 +274,40 @@ public class LdapGroupsMapping
       SearchResult result = results.nextElement();
       String userDn = result.getNameInNamespace();
 
-      NamingEnumeration<SearchResult> groupResults =
-          ctx.search(baseDN,
-              "(&" + groupSearchFilter + "(" + groupMemberAttr + "={0}))",
-              new Object[]{userDn},
-              SEARCH_CONTROLS);
-      while (groupResults.hasMoreElements()) {
-        SearchResult groupResult = groupResults.nextElement();
-        Attribute groupName = groupResult.getAttributes().get(groupNameAttr);
-        groups.add(groupName.get().toString());
+      NamingEnumeration<SearchResult> groupResults = null;
+
+      if (isPosix) {
+        String gidNumber = null;
+        String uidNumber = null;
+        Attribute gidAttribute = result.getAttributes().get(posixGidAttr);
+        Attribute uidAttribute = result.getAttributes().get(posixUidAttr);
+        if (gidAttribute != null) {
+          gidNumber = gidAttribute.get().toString();
+        }
+        if (uidAttribute != null) {
+          uidNumber = uidAttribute.get().toString();
+        }
+        if (uidNumber != null && gidNumber != null) {
+          groupResults =
+              ctx.search(baseDN,
+                  "(&"+ groupSearchFilter + "(|(" + posixGidAttr + "={0})" +
+                      "(" + groupMemberAttr + "={1})))",
+                  new Object[] { gidNumber, uidNumber },
+                  SEARCH_CONTROLS);
+        }
+      } else {
+        groupResults =
+            ctx.search(baseDN,
+                "(&" + groupSearchFilter + "(" + groupMemberAttr + "={0}))",
+                new Object[]{userDn},
+                SEARCH_CONTROLS);
+      }
+      if (groupResults != null) {
+        while (groupResults.hasMoreElements()) {
+          SearchResult groupResult = groupResults.nextElement();
+          Attribute groupName = groupResult.getAttributes().get(groupNameAttr);
+          groups.add(groupName.get().toString());
+        }
       }
     }
 
@@ -256,12 +329,28 @@ public class LdapGroupsMapping
       // Set up SSL security, if necessary
       if (useSsl) {
         env.put(Context.SECURITY_PROTOCOL, "ssl");
-        System.setProperty("javax.net.ssl.keyStore", keystore);
-        System.setProperty("javax.net.ssl.keyStorePassword", keystorePass);
+        if (!keystore.isEmpty()) {
+          System.setProperty("javax.net.ssl.keyStore", keystore);
+        }
+        if (!keystorePass.isEmpty()) {
+          System.setProperty("javax.net.ssl.keyStorePassword", keystorePass);
+        }
+        if (!truststore.isEmpty()) {
+          System.setProperty("javax.net.ssl.trustStore", truststore);
+        }
+        if (!truststorePass.isEmpty()) {
+          System.setProperty("javax.net.ssl.trustStorePassword",
+              truststorePass);
+        }
       }
 
       env.put(Context.SECURITY_PRINCIPAL, bindUser);
       env.put(Context.SECURITY_CREDENTIALS, bindPassword);
+
+      env.put("com.sun.jndi.ldap.connect.timeout", conf.get(CONNECTION_TIMEOUT,
+          String.valueOf(CONNECTION_TIMEOUT_DEFAULT)));
+      env.put("com.sun.jndi.ldap.read.timeout", conf.get(READ_TIMEOUT,
+          String.valueOf(READ_TIMEOUT_DEFAULT)));
 
       ctx = new InitialDirContext(env);
     }
@@ -298,15 +387,10 @@ public class LdapGroupsMapping
     if (ldapUrl == null || ldapUrl.isEmpty()) {
       throw new RuntimeException("LDAP URL is not configured");
     }
-    
+
     useSsl = conf.getBoolean(LDAP_USE_SSL_KEY, LDAP_USE_SSL_DEFAULT);
-    keystore = conf.get(LDAP_KEYSTORE_KEY, LDAP_KEYSTORE_DEFAULT);
-    
-    keystorePass = getPassword(conf, LDAP_KEYSTORE_PASSWORD_KEY,
-        LDAP_KEYSTORE_PASSWORD_DEFAULT);
-    if (keystorePass.isEmpty()) {
-      keystorePass = extractPassword(conf.get(LDAP_KEYSTORE_PASSWORD_FILE_KEY,
-          LDAP_KEYSTORE_PASSWORD_FILE_DEFAULT));
+    if (useSsl) {
+      loadSslConf(conf);
     }
     
     bindUser = conf.get(BIND_USER_KEY, BIND_USER_DEFAULT);
@@ -321,19 +405,68 @@ public class LdapGroupsMapping
         conf.get(GROUP_SEARCH_FILTER_KEY, GROUP_SEARCH_FILTER_DEFAULT);
     userSearchFilter =
         conf.get(USER_SEARCH_FILTER_KEY, USER_SEARCH_FILTER_DEFAULT);
+    isPosix = groupSearchFilter.contains(POSIX_GROUP) && userSearchFilter
+        .contains(POSIX_ACCOUNT);
     groupMemberAttr =
         conf.get(GROUP_MEMBERSHIP_ATTR_KEY, GROUP_MEMBERSHIP_ATTR_DEFAULT);
     groupNameAttr =
         conf.get(GROUP_NAME_ATTR_KEY, GROUP_NAME_ATTR_DEFAULT);
+    posixUidAttr =
+        conf.get(POSIX_UID_ATTR_KEY, POSIX_UID_ATTR_DEFAULT);
+    posixGidAttr =
+        conf.get(POSIX_GID_ATTR_KEY, POSIX_GID_ATTR_DEFAULT);
 
     int dirSearchTimeout = conf.getInt(DIRECTORY_SEARCH_TIMEOUT, DIRECTORY_SEARCH_TIMEOUT_DEFAULT);
     SEARCH_CONTROLS.setTimeLimit(dirSearchTimeout);
-    // Limit the attributes returned to only those required to speed up the search. See HADOOP-10626 for more details.
-    SEARCH_CONTROLS.setReturningAttributes(new String[] {groupNameAttr});
+    // Limit the attributes returned to only those required to speed up the search.
+    // See HADOOP-10626 and HADOOP-12001 for more details.
+    SEARCH_CONTROLS.setReturningAttributes(
+        new String[] {groupNameAttr, posixUidAttr, posixGidAttr});
 
     this.conf = conf;
   }
 
+  private void loadSslConf(Configuration sslConf) {
+    keystore = sslConf.get(LDAP_KEYSTORE_KEY, LDAP_KEYSTORE_DEFAULT);
+    keystorePass = getPassword(sslConf, LDAP_KEYSTORE_PASSWORD_KEY,
+        LDAP_KEYSTORE_PASSWORD_DEFAULT);
+    if (keystorePass.isEmpty()) {
+      keystorePass = extractPassword(sslConf.get(
+          LDAP_KEYSTORE_PASSWORD_FILE_KEY,
+          LDAP_KEYSTORE_PASSWORD_FILE_DEFAULT));
+    }
+
+    truststore = sslConf.get(LDAP_TRUSTSTORE_KEY, "");
+    truststorePass = getPasswordFromCredentialProviders(
+        sslConf, LDAP_TRUSTSTORE_PASSWORD_KEY, "");
+    if (truststorePass.isEmpty()) {
+      truststorePass = extractPassword(
+          sslConf.get(LDAP_TRUSTSTORE_PASSWORD_FILE_KEY, ""));
+    }
+  }
+
+  String getPasswordFromCredentialProviders(
+      Configuration conf, String alias, String defaultPass) {
+    String password = defaultPass;
+    try {
+      char[] passchars = conf.getPasswordFromCredentialProviders(alias);
+      if (passchars != null) {
+        password = new String(passchars);
+      }
+    } catch (IOException ioe) {
+      LOG.warn("Exception while trying to get password for alias " + alias
+          + ": ", ioe);
+    }
+    return password;
+  }
+
+  /**
+   * Passwords should not be stored in configuration. Use
+   * {@link #getPasswordFromCredentialProviders(
+   *            Configuration, String, String)}
+   * to avoid reading passwords from a configuration file.
+   */
+  @Deprecated
   String getPassword(Configuration conf, String alias, String defaultPass) {
     String password = null;
     try {
