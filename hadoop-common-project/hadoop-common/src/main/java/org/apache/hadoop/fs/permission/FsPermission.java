@@ -180,7 +180,7 @@ public class FsPermission implements Writable {
    */
   public short toOctal() {
     int n = this.toShort();
-    int octal = (n>>>9&1)*1000 + (n>>>6&7)*100 + (n>>>3&7)*10 + (n&7);
+    int octal = (n>>>9&3)*1000 + (n>>>6&7)*100 + (n>>>3&7)*10 + (n&7);
     return (short)octal;
   }
 
