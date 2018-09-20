@@ -36,6 +36,22 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
 
   <distributionManagement>
     <repository>
+      <id>snap-repo-public</id>
+      <name>Public Maven Repository for SNAP</name>
+      <url>http://nexus.senbox.net/nexus/content/repositories/releases/</url>
+      <uniqueVersion>false</uniqueVersion>
+    </repository>
+    <snapshotRepository>
+      <id>snap-repo-public</id>
+      <name>Public Maven Snapshot Repository for SNAP</name>
+      <url>http://nexus.senbox.net/nexus/content/repositories/snapshots/</url>
+      <uniqueVersion>false</uniqueVersion>
+    </snapshotRepository>
+  </distributionManagement>
+
+<!--
+  <distributionManagement>
+    <repository>
       <id>${distMgmtStagingId}</id>
       <name>${distMgmtStagingName}</name>
       <url>${distMgmtStagingUrl}</url>
@@ -50,7 +66,8 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
       <url>scpexe://people.apache.org/www/hadoop.apache.org/docs/r${project.version}</url>
     </site>
   </distributionManagement>
-
+-->
+  
   <repositories>
     <repository>
       <id>${distMgmtSnapshotsId}</id>
@@ -64,6 +81,20 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xs
         <enabled>false</enabled>
       </snapshots>
     </repository>
+
+    <repository>
+      <id>snap-repo-public</id>
+      <name>Public Maven Repository for SNAP</name>
+      <url>http://nexus.senbox.net/nexus/content/repositories/public/</url>
+      <releases>
+        <enabled>true</enabled>
+        <checksumPolicy>warn</checksumPolicy>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+        <checksumPolicy>warn</checksumPolicy>
+      </snapshots>
+      </repository>
   </repositories>
 
   <licenses>
