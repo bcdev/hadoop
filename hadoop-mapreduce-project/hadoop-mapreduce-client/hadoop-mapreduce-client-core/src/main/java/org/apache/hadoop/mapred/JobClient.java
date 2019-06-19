@@ -17,15 +17,6 @@
  */
 package org.apache.hadoop.mapred;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.URL;
-import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
@@ -48,9 +39,17 @@ import org.apache.hadoop.mapreduce.util.ConfigUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.SecretManager.InvalidToken;
 import org.apache.hadoop.security.token.Token;
-import org.apache.hadoop.security.token.TokenRenewer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.URL;
+import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * <code>JobClient</code> is the primary interface for the user-job to interact
@@ -860,7 +859,24 @@ public class JobClient extends CLI implements AutoCloseable {
       throw new IOException(ie);
     }
   }
-  
+
+  public JobStatus getJobStatus(JobID jobId) throws IOException {
+    try {
+      final JobID jobIdFinal = jobId;
+      org.apache.hadoop.mapreduce.JobStatus job =
+              clientUgi.doAs(new PrivilegedExceptionAction<
+                      org.apache.hadoop.mapreduce.JobStatus> () {
+                public org.apache.hadoop.mapreduce.JobStatus run()
+                        throws IOException, InterruptedException {
+                  return cluster.getJobStatus(jobIdFinal);
+                }
+              });
+      return JobStatus.downgrade(job);
+    } catch (InterruptedException e) {
+      throw new IOException(e);
+    }
+  }
+
   /** 
    * Utility that submits a job, then polls for progress until the job is
    * complete.
