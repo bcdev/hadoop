@@ -248,6 +248,7 @@ public class SwiftNativeFileSystemStore {
                                1,
                                getBlocksize(),
                                lastModified,
+                               0, null, System.getProperty("user.name"), null,
                                correctSwiftPath);
   }
 
