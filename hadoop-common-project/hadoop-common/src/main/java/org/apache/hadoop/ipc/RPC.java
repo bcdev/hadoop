@@ -687,10 +687,15 @@ public class RPC {
     // If you see this error on a mock object in a unit test you're
     // developing, make sure to use MockitoUtil.mockProtocol() to
     // create your mock.
-    throw new HadoopIllegalArgumentException(
-        "Cannot close proxy - is not Closeable or "
-            + "does not provide closeable invocation handler "
-            + proxy.getClass());
+//    throw new HadoopIllegalArgumentException(
+//        "Cannot close proxy - is not Closeable or "
+//            + "does not provide closeable invocation handler "
+//            + proxy.getClass());
+    LOG.error("ignoring proxy close error: ",
+              new HadoopIllegalArgumentException(
+                  "Cannot close proxy - is not Closeable or "
+                + "does not provide closeable invocation handler "
+                + proxy.getClass()));
   }
   /**
    * Get the RPC time from configuration;
