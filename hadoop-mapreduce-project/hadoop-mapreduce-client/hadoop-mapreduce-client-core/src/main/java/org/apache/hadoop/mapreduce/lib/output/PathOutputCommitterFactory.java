@@ -20,6 +20,7 @@ package org.apache.hadoop.mapreduce.lib.output;
 
 import java.io.IOException;
 
+import org.apache.hadoop.fs.FileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,6 +153,14 @@ public class PathOutputCommitterFactory extends Configured {
       // there is no explicit factory and there's an output path
       // Get the scheme of the destination
       String scheme = outputPath.toUri().getScheme();
+      // use default scheme for output directories without one, boe, 20200930
+      if (scheme == null) {
+        try {
+          scheme = FileSystem.get(conf).getScheme();
+        } catch (IOException e) {
+          throw new RuntimeException("failed to get defaultFS", e);
+        }
+      }
 
       // and see if it has a key
       String schemeKey = String.format(COMMITTER_FACTORY_SCHEME_PATTERN,

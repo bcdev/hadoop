@@ -206,9 +206,11 @@ public final class Paths {
     String fallbackPath = fs.getScheme().equals("file")
         ? System.getProperty(JAVA_IO_TMPDIR)
         : FILESYSTEM_TEMP_PATH;
-
-    return fs.makeQualified(new Path(conf.getTrimmed(
-        FS_S3A_COMMITTER_STAGING_TMP_PATH, fallbackPath)));
+    // temp dir may (or rather shall) be on different (temporally consistent) shared file system, boe, 20200929
+    //return fs.makeQualified(new Path(conf.getTrimmed(
+    //    FS_S3A_COMMITTER_STAGING_TMP_PATH, fallbackPath)));
+    return new Path(conf.getTrimmed(
+        FS_S3A_COMMITTER_STAGING_TMP_PATH, fallbackPath));
   }
 
   /**
