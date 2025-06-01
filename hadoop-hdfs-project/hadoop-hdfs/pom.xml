@@ -20,11 +20,11 @@ https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <groupId>org.apache.hadoop</groupId>
     <artifactId>hadoop-project-dist</artifactId>
-    <version>3.4.1</version>
+    <version>3.4.1-BC</version>
     <relativePath>../../hadoop-project-dist</relativePath>
   </parent>
   <artifactId>hadoop-hdfs</artifactId>
-  <version>3.4.1</version>
+  <version>3.4.1-BC</version>
   <description>Apache Hadoop HDFS</description>
   <name>Apache Hadoop HDFS</name>
   <packaging>jar</packaging>
@@ -416,7 +416,7 @@ https://maven.apache.org/xsd/maven-4.0.0.xsd">
             <exclude>src/main/webapps/secondary/robots.txt</exclude>
             <exclude>src/contrib/**</exclude>
             <exclude>src/site/resources/images/*</exclude>
-            <exclude>src/main/webapps/static/bootstrap-3.4.1/**</exclude>
+            <exclude>src/main/webapps/static/bootstrap-3.4.1-BC/**</exclude>
             <exclude>src/main/webapps/static/moment.min.js</exclude>
             <exclude>src/main/webapps/static/dust-full-2.0.0.min.js</exclude>
             <exclude>src/main/webapps/static/dust-helpers-1.1.1.min.js</exclude>
