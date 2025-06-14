@@ -76,6 +76,7 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
           <excludePackageNames>org.apache.hadoop.yarn.proto:org.apache.hadoop.yarn.federation.proto:org.apache.hadoop.yarn.service</excludePackageNames>
+          <excludePackageNames>*</excludePackageNames>
         </configuration>
       </plugin>
     </plugins>

@@ -389,6 +389,7 @@ https://maven.apache.org/xsd/maven-4.0.0.xsd">
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
           <excludePackageNames>org.apache.hadoop.hdfs.protocol.proto</excludePackageNames>
+          <excludePackageNames>*</excludePackageNames>
         </configuration>
       </plugin>
       <plugin>

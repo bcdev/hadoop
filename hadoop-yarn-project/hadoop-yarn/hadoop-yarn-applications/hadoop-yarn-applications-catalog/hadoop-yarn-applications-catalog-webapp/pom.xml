@@ -482,6 +482,7 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
                     <excludePackageNames>org.apache.hadoop.yarn.appcatalog</excludePackageNames>
+                    <excludePackageNames>*</excludePackageNames>
                 </configuration>
             </plugin>
         </plugins>
